@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --color-vne-red: #9f224e;
+  --color-vne-red-hover: #b92b5d;
+  --color-vne-gray: #757575;
+  --color-vne-gray-light: #e5e5e5;
+  --color-vne-text: #222222;
+  --color-vne-bg: #f7f7f7;
+}
