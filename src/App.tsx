@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import CategoryPage from './pages/CategoryPage';
 import DetailPage from './pages/DetailPage';
 import SearchPage from './pages/SearchPage';
+import CarSpecsPage from './pages/CarSpecsPage';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="tinh-trang/:condition" element={<CategoryPage type="condition" />} />
           <Route path="tag/:tag" element={<CategoryPage type="tag" />} />
           <Route path="xe/:id" element={<DetailPage />} />
+          <Route path="xe/:id/chi-tiet-tskt" element={<CarSpecsPage />} />
           <Route path="tim-kiem" element={<SearchPage />} />
         </Route>
       </Routes>

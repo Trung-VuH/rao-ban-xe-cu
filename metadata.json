@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "VnExpress V-Car - Tin rao & Thông số kỹ thuật ô tô",
+  "description": "Hệ thống mua bán xe ô tô và tra cứu chi tiết thông số kỹ thuật, bảng giá lăn bánh, ước tính trả góp của các phiên bản xe hơi trên VnExpress V-Car.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

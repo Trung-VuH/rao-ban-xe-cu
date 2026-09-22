@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { mockCars } from '../data/mockData';
 import { ChevronRight, Calendar, Gauge, MapPin, Fuel, Users, Settings, Tag, Phone } from 'lucide-react';
 import CarCard from '../components/CarCard';
+import PriceHistoryChart from '../components/PriceHistoryChart';
 
 export default function DetailPage() {
   const { id } = useParams();
@@ -56,7 +57,7 @@ export default function DetailPage() {
         {/* Title & Price */}
         <div>
           <h1 className="text-2xl font-bold text-[#222] leading-tight mb-2">{car.title}</h1>
-          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-4 font-medium">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-4 font-medium">
             <span>Đăng ngày {formatDate(car.datePosted)}</span>
             <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
             <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${car.status === 'Đang bán' ? 'bg-[#9F224E]/10 text-[#9F224E]' : 'bg-gray-200 text-gray-500'}`}>
@@ -104,6 +105,15 @@ export default function DetailPage() {
             ))}
           </div>
         </div>
+
+        {/* Price History Chart for same car model */}
+        <PriceHistoryChart
+          brand={car.brand}
+          model={car.model}
+          currentCarPrice={car.price}
+          currentCarYear={car.year}
+          title={`Biểu đồ giá các mẫu xe cùng dòng ${car.brand} ${car.model}`}
+        />
         
         {/* Related Cars Below Main Content */}
         <div className="space-y-8 mt-4">
@@ -188,6 +198,16 @@ export default function DetailPage() {
               </div>
             </div>
           </div>
+
+          <div className="mt-5 pt-4 border-t border-gray-100">
+            <Link
+              to={`/xe/${car.id}/chi-tiet-tskt`}
+              className="w-full flex items-center justify-center gap-2 bg-[#9F224E]/10 hover:bg-[#9F224E]/20 text-[#9F224E] py-2.5 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors"
+            >
+              <span>Xem chi tiết thông số kỹ thuật đầy đủ</span>
+              <ChevronRight size={14} />
+            </Link>
+          </div>
         </div>
 
         {/* Seller */}
@@ -205,12 +225,6 @@ export default function DetailPage() {
             </div>
           </div>
         </div>
-
-        {/* V-Car Link Mock */}
-        <a href="#" className="block bg-[#222] text-white rounded-lg p-5 text-center hover:bg-black transition-colors shadow-lg">
-          <div className="font-bold text-lg mb-1 tracking-tight">Tra cứu {car.brand} {car.model}</div>
-          <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Xem thông số chi tiết trên V-Car &rarr;</div>
-        </a>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useMemo, useState, useEffect } from 'react';
 import CarCard from '../components/CarCard';
 import SearchFilter from '../components/SearchFilter';
+import PriceHistoryChart from '../components/PriceHistoryChart';
 import { mockCars } from '../data/mockData';
 import { FilterState, Car } from '../types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -65,6 +66,9 @@ export default function CategoryPage({ type }: { type: 'brand' | 'bodyStyle' | '
   const totalPages = Math.ceil(filteredCars.length / itemsPerPage);
   const currentCars = filteredCars.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const activeBrand = filterState.brand || brand;
+  const activeModel = filterState.model || model;
+
   const getPageTitle = () => {
     switch (type) {
       case 'brand': return `Mua bán xe ${brand}`;
@@ -91,6 +95,14 @@ export default function CategoryPage({ type }: { type: 'brand' | 'bodyStyle' | '
             <h1 className="text-2xl font-bold text-[#222]">{getPageTitle()}</h1>
             <span className="text-sm text-gray-500">{filteredCars.length} kết quả phù hợp</span>
           </div>
+
+          {activeBrand && activeModel && (
+            <PriceHistoryChart 
+              brand={activeBrand} 
+              model={activeModel} 
+              title={`Biểu đồ giá rao bán các mẫu xe ${activeBrand} ${activeModel}`}
+            />
+          )}
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {currentCars.map(car => <CarCard key={car.id} car={car} />)}

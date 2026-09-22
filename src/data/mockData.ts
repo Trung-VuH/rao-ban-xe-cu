@@ -202,10 +202,10 @@ function generateMockCars(count: number): Car[] {
   const brands = Object.keys(BRANDS_MODELS);
 
   for (let i = 1; i <= count; i++) {
-    const brand = randomElement(brands);
-    const model = randomElement(BRANDS_MODELS[brand]);
-    const year = randomInt(2010, 2024);
-    const condition = randomElement(CONDITIONS);
+    let brand = randomElement(brands);
+    let model = randomElement(BRANDS_MODELS[brand]);
+    let year = randomInt(2010, 2024);
+    let condition = randomElement(CONDITIONS);
     
     // Price in millions VND (e.g., 300 = 300,000,000 VND)
     let basePrice = randomInt(300, 3000);
@@ -213,15 +213,23 @@ function generateMockCars(count: number): Car[] {
       basePrice = randomInt(2000, 15000);
     }
     
+    if (i === 402) {
+      brand = 'Ford';
+      model = 'Everest';
+      year = 2026;
+      condition = 'Mới';
+      basePrice = 1245;
+    }
+
     const isElectric = brand === 'VinFast' && model.startsWith('VF');
-    const engine = isElectric ? 'Điện' : randomElement(ENGINES.filter(e => e !== 'Điện'));
+    const engine = (i === 402) ? 'Dầu' : (isElectric ? 'Điện' : randomElement(ENGINES.filter(e => e !== 'Điện')));
     
-    const bodyStyle = randomElement(BODY_STYLES);
-    const seatCount = randomElement(SEATS);
+    const bodyStyle = (i === 402) ? 'SUV' : randomElement(BODY_STYLES);
+    const seatCount = (i === 402) ? 7 : randomElement(SEATS);
     
     const car: Car = {
       id: `car-${i}`,
-      title: `Bán xe ${brand} ${model} ${year} ${condition === 'Mới' ? 'mới' : 'cũ'}`,
+      title: i === 402 ? 'Bán xe Ford Everest 2026 Active 2.0 AT 4x2 mới' : `Bán xe ${brand} ${model} ${year} ${condition === 'Mới' ? 'mới' : 'cũ'}`,
       brand,
       model,
       year,
