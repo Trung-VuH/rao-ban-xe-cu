@@ -1,7 +1,8 @@
 import { useParams, Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { mockCars } from '../data/mockData';
-import { ChevronRight, Calendar, Gauge, MapPin, Fuel, Users, Settings, Tag, Phone } from 'lucide-react';
+import { getCarPrimaryPriceRange, getAllMatchingPriceRanges } from '../data/priceRangesData';
+import { ChevronRight, Calendar, Gauge, MapPin, Fuel, Users, Settings, Tag, Phone, Search, ExternalLink } from 'lucide-react';
 import CarCard from '../components/CarCard';
 import PriceHistoryChart from '../components/PriceHistoryChart';
 
@@ -10,6 +11,9 @@ export default function DetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   
   const car = useMemo(() => mockCars.find(c => c.id === id), [id]);
+
+  const primaryPriceRange = useMemo(() => car ? getCarPrimaryPriceRange(car) : null, [car]);
+  const allMatchingRanges = useMemo(() => car ? getAllMatchingPriceRanges(car) : [], [car]);
 
   const relatedByModel = useMemo(() => 
     car ? mockCars.filter(c => c.brand === car.brand && c.model === car.model && c.id !== car.id).slice(0, 4) : [],
@@ -46,6 +50,18 @@ export default function DetailPage() {
           <Link to="/" className="hover:text-vne-red">V-Car</Link>
           <span>/</span>
           <Link to={`/tinh-trang/${car.condition}`} className="hover:text-vne-red">Xe {car.condition}</Link>
+          {primaryPriceRange && (
+            <>
+              <span>/</span>
+              <Link 
+                to={`/khoang-gia/${primaryPriceRange.slug}`} 
+                className="text-[#9F224E] hover:underline font-medium bg-[#9F224E]/5 px-2 py-0.5 rounded"
+                title={`Xem tất cả tin rao ${primaryPriceRange.title}`}
+              >
+                {primaryPriceRange.shortLabel}
+              </Link>
+            </>
+          )}
           <span>/</span>
           <Link to={`/hang-xe/${car.brand}`} className="hover:text-vne-red">{car.brand}</Link>
           <span>/</span>
@@ -57,14 +73,29 @@ export default function DetailPage() {
         {/* Title & Price */}
         <div>
           <h1 className="text-2xl font-bold text-[#222] leading-tight mb-2">{car.title}</h1>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-4 font-medium">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-3 font-medium">
             <span>Đăng ngày {formatDate(car.datePosted)}</span>
             <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
             <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${car.status === 'Đang bán' ? 'bg-[#9F224E]/10 text-[#9F224E]' : 'bg-gray-200 text-gray-500'}`}>
               {car.status}
             </span>
           </div>
-          <div className="text-3xl font-bold text-[#9F224E]">{formatPrice(car.price)}</div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="text-3xl font-bold text-[#9F224E]">{formatPrice(car.price)}</div>
+
+            {primaryPriceRange && (
+              <Link
+                to={`/khoang-gia/${primaryPriceRange.slug}`}
+                className="inline-flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100/80 border border-rose-200 text-[#9F224E] text-xs font-bold px-3 py-1.5 rounded-full transition-all group shadow-2xs"
+                title={`Xem toàn bộ tin rao thuộc ${primaryPriceRange.title}`}
+              >
+                <Tag size={13} className="text-[#9F224E] shrink-0" />
+                <span>Phân khúc: <strong>{primaryPriceRange.title}</strong></span>
+                <ChevronRight size={13} className="text-[#9F224E] group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Gallery */}
@@ -209,6 +240,69 @@ export default function DetailPage() {
             </Link>
           </div>
         </div>
+
+        {/* Price Range Category Box */}
+        {primaryPriceRange && (
+          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-gray-100">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-gray-800 uppercase tracking-wide">
+                <Tag size={14} className="text-[#9F224E]" />
+                <span>Tin rao theo khoảng giá</span>
+              </div>
+              <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60">
+                {primaryPriceRange.priceDisplay}
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-600 mb-2">
+              Tin rao này thuộc chuyên trang khoảng giá:
+            </p>
+
+            <Link
+              to={`/khoang-gia/${primaryPriceRange.slug}`}
+              className="block bg-gradient-to-br from-gray-50 to-white hover:from-rose-50/40 hover:to-white border border-gray-200 hover:border-[#9F224E] rounded-lg p-3 transition-all group"
+            >
+              <div className="font-bold text-sm text-gray-900 group-hover:text-[#9F224E] transition-colors flex items-center justify-between">
+                <span>{primaryPriceRange.title}</span>
+                <ChevronRight size={16} className="text-gray-400 group-hover:text-[#9F224E] group-hover:translate-x-0.5 transition-transform" />
+              </div>
+              <div className="text-xs text-gray-500 mt-1.5">
+                <span className="text-gray-600 font-medium">Gợi ý mẫu xe: </span>
+                <span className="text-gray-700">{primaryPriceRange.recommendedModels.slice(0, 3).map(m => m.split(' (')[0]).join(', ')}</span>
+              </div>
+            </Link>
+
+            {/* Other matching special segments if any (7 chỗ, bán tải, vios/i10) */}
+            {allMatchingRanges.filter(r => r.slug !== primaryPriceRange.slug).length > 0 && (
+              <div className="mt-3 pt-2.5 border-t border-gray-100">
+                <div className="text-[11px] font-semibold text-gray-500 mb-1.5">
+                  Cũng thuộc nhóm tìm kiếm phổ biến:
+                </div>
+                <div className="space-y-1.5">
+                  {allMatchingRanges.filter(r => r.slug !== primaryPriceRange.slug).map(sub => (
+                    <Link
+                      key={sub.slug}
+                      to={`/khoang-gia/${sub.slug}`}
+                      className="flex items-center justify-between text-xs text-gray-700 hover:text-[#9F224E] bg-gray-50 hover:bg-gray-100/80 px-2.5 py-1.5 rounded-md border border-gray-100"
+                    >
+                      <span className="font-medium truncate">{sub.title}</span>
+                      <ChevronRight size={12} className="shrink-0 text-gray-400" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-3.5 pt-2 border-t border-gray-100">
+              <Link
+                to={`/khoang-gia/${primaryPriceRange.slug}`}
+                className="w-full text-center block text-xs font-bold text-[#9F224E] hover:underline"
+              >
+                Xem tất cả tin rao cùng khoảng giá &rarr;
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Seller */}
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 shadow-sm">

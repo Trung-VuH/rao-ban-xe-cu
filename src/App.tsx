@@ -5,6 +5,7 @@ import CategoryPage from './pages/CategoryPage';
 import DetailPage from './pages/DetailPage';
 import SearchPage from './pages/SearchPage';
 import CarSpecsPage from './pages/CarSpecsPage';
+import PriceRangeDetailPage from './pages/PriceRangeDetailPage';
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
+          <Route path="khoang-gia/:slug" element={<PriceRangeDetailPage />} />
           <Route path="hang-xe/:brand" element={<CategoryPage type="brand" />} />
           <Route path="phan-khuc/:bodyStyle" element={<CategoryPage type="bodyStyle" />} />
           <Route path="tinh-thanh/:location" element={<CategoryPage type="location" />} />

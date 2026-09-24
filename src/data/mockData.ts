@@ -206,11 +206,157 @@ function generateMockCars(count: number): Car[] {
     let model = randomElement(BRANDS_MODELS[brand]);
     let year = randomInt(2010, 2024);
     let condition = randomElement(CONDITIONS);
-    
-    // Price in millions VND (e.g., 300 = 300,000,000 VND)
-    let basePrice = randomInt(300, 3000);
-    if (brand === 'Mercedes' || brand === 'BMW' || brand === 'Audi' || brand === 'Porsche' || brand === 'Lexus' || brand === 'Land Rover' || brand === 'Maserati' || brand === 'Aston Martin' || brand === 'Bentley' || brand === 'Jaguar') {
-      basePrice = randomInt(2000, 15000);
+    let basePrice = 500;
+    let seatCount = randomElement(SEATS);
+    let bodyStyle = randomElement(BODY_STYLES);
+
+    // Realistic price tier distribution to match user search keyword volumes
+    if (i <= 35) {
+      // Dưới 100 triệu (30 - 95 triệu)
+      basePrice = randomInt(35, 95);
+      condition = 'Cũ';
+      year = randomInt(2006, 2012);
+      const lowBudgetOptions = [
+        { b: 'Kia', m: 'Morning', s: 4, bs: 'Xe nhỏ cỡ A' },
+        { b: 'Hyundai', m: 'Grand i10', s: 4, bs: 'Xe nhỏ cỡ A' },
+        { b: 'Suzuki', m: 'Swift', s: 4, bs: 'Xe nhỏ cỡ A' },
+        { b: 'Toyota', m: 'Vios', s: 5, bs: 'Xe nhỏ hạng B' },
+        { b: 'Mitsubishi', m: 'Triton', s: 5, bs: 'Bán tải cỡ trung' },
+        { b: 'Toyota', m: 'Innova', s: 7, bs: 'MPV cỡ trung' }
+      ];
+      const opt = randomElement(lowBudgetOptions);
+      brand = opt.b;
+      model = opt.m;
+      seatCount = opt.s;
+      bodyStyle = opt.bs;
+    } else if (i <= 100) {
+      // 100 - 200 triệu (110 - 195 triệu)
+      basePrice = randomInt(110, 195);
+      condition = 'Cũ';
+      year = randomInt(2010, 2016);
+      const tier2Options = [
+        { b: 'Hyundai', m: 'Grand i10', s: 5, bs: 'Xe nhỏ cỡ A' },
+        { b: 'Kia', m: 'Morning', s: 5, bs: 'Xe nhỏ cỡ A' },
+        { b: 'Toyota', m: 'Vios', s: 5, bs: 'Xe nhỏ hạng B' },
+        { b: 'Toyota', m: 'Innova', s: 7, bs: 'MPV cỡ trung' },
+        { b: 'Ford', m: 'Ranger', s: 5, bs: 'Bán tải cỡ trung' },
+        { b: 'Mitsubishi', m: 'Attrage', s: 5, bs: 'Xe nhỏ hạng B' }
+      ];
+      const opt = randomElement(tier2Options);
+      brand = opt.b;
+      model = opt.m;
+      seatCount = opt.s;
+      bodyStyle = opt.bs;
+    } else if (i <= 190) {
+      // 200 - 300 triệu (205 - 295 triệu) - Phân khúc volume tìm kiếm cao nhất
+      basePrice = randomInt(205, 295);
+      condition = 'Cũ';
+      year = randomInt(2013, 2018);
+      const tier3Options = [
+        { b: 'Toyota', m: 'Vios', s: 5, bs: 'Xe nhỏ hạng B' },
+        { b: 'Hyundai', m: 'Grand i10', s: 5, bs: 'Xe nhỏ cỡ A' },
+        { b: 'Hyundai', m: 'Accent', s: 5, bs: 'Xe nhỏ hạng B' },
+        { b: 'Honda', m: 'City', s: 5, bs: 'Xe nhỏ hạng B' },
+        { b: 'Kia', m: 'Morning', s: 5, bs: 'Xe nhỏ cỡ A' },
+        { b: 'Toyota', m: 'Innova', s: 7, bs: 'MPV cỡ trung' },
+        { b: 'Ford', m: 'Ranger', s: 5, bs: 'Bán tải cỡ trung' },
+        { b: 'VinFast', m: 'Fadil', s: 5, bs: 'Xe nhỏ cỡ A' }
+      ];
+      const opt = randomElement(tier3Options);
+      brand = opt.b;
+      model = opt.m;
+      seatCount = opt.s;
+      bodyStyle = opt.bs;
+    } else if (i <= 260) {
+      // 300 - 400 triệu (310 - 395 triệu)
+      basePrice = randomInt(310, 395);
+      condition = 'Cũ';
+      year = randomInt(2016, 2020);
+      const tier4Options = [
+        { b: 'Toyota', m: 'Vios', s: 5, bs: 'Xe nhỏ hạng B' },
+        { b: 'Honda', m: 'City', s: 5, bs: 'Xe nhỏ hạng B' },
+        { b: 'Hyundai', m: 'Accent', s: 5, bs: 'Xe nhỏ hạng B' },
+        { b: 'Mitsubishi', m: 'Xpander', s: 7, bs: 'MPV cỡ nhỏ' },
+        { b: 'Ford', m: 'Ranger', s: 5, bs: 'Bán tải cỡ trung' },
+        { b: 'Kia', m: 'K3', s: 5, bs: 'Xe cỡ vừa hạng C' }
+      ];
+      const opt = randomElement(tier4Options);
+      brand = opt.b;
+      model = opt.m;
+      seatCount = opt.s;
+      bodyStyle = opt.bs;
+    } else if (i <= 325) {
+      // 400 - 500 triệu (410 - 495 triệu)
+      basePrice = randomInt(410, 495);
+      year = randomInt(2017, 2021);
+      const tier5Options = [
+        { b: 'Mazda', m: 'Mazda 3', s: 5, bs: 'Xe cỡ vừa hạng C' },
+        { b: 'Kia', m: 'Cerato', s: 5, bs: 'Xe cỡ vừa hạng C' },
+        { b: 'Toyota', m: 'Fortuner', s: 7, bs: 'SUV phổ thông cỡ lớn' },
+        { b: 'Ford', m: 'Ranger', s: 5, bs: 'Bán tải cỡ trung' },
+        { b: 'Hyundai', m: 'Elantra', s: 5, bs: 'Xe cỡ vừa hạng C' },
+        { b: 'Mitsubishi', m: 'Xpander', s: 7, bs: 'MPV cỡ nhỏ' }
+      ];
+      const opt = randomElement(tier5Options);
+      brand = opt.b;
+      model = opt.m;
+      seatCount = opt.s;
+      bodyStyle = opt.bs;
+    } else if (i <= 380) {
+      // 500 - 600 triệu (510 - 595 triệu)
+      basePrice = randomInt(510, 595);
+      year = randomInt(2018, 2022);
+      const tier6Options = [
+        { b: 'Mazda', m: 'CX-5', s: 5, bs: 'Xe cỡ vừa hạng C' },
+        { b: 'Kia', m: 'Seltos', s: 5, bs: 'Xe nhỏ hạng B+/C-' },
+        { b: 'Hyundai', m: 'Tucson', s: 5, bs: 'Xe cỡ vừa hạng C' },
+        { b: 'Toyota', m: 'Corolla Cross', s: 5, bs: 'Xe nhỏ hạng B+/C-' },
+        { b: 'Ford', m: 'Ranger', s: 5, bs: 'Bán tải cỡ trung' },
+        { b: 'Toyota', m: 'Fortuner', s: 7, bs: 'SUV phổ thông cỡ lớn' }
+      ];
+      const opt = randomElement(tier6Options);
+      brand = opt.b;
+      model = opt.m;
+      seatCount = opt.s;
+      bodyStyle = opt.bs;
+    } else if (i <= 425) {
+      // 600 - 800 triệu (610 - 790 triệu)
+      basePrice = randomInt(610, 790);
+      year = randomInt(2018, 2023);
+      const tier7Options = [
+        { b: 'Hyundai', m: 'Santa Fe', s: 7, bs: 'SUV phổ thông cỡ lớn' },
+        { b: 'Honda', m: 'CR-V', s: 7, bs: 'Xe cỡ vừa hạng C' },
+        { b: 'Ford', m: 'Everest', s: 7, bs: 'SUV phổ thông cỡ lớn' },
+        { b: 'Toyota', m: 'Camry', s: 5, bs: 'Xe cỡ trung hạng D' },
+        { b: 'Kia', m: 'Sorento', s: 7, bs: 'SUV phổ thông cỡ lớn' }
+      ];
+      const opt = randomElement(tier7Options);
+      brand = opt.b;
+      model = opt.m;
+      seatCount = opt.s;
+      bodyStyle = opt.bs;
+    } else if (i <= 455) {
+      // 800 triệu - 1 tỷ (810 - 995 triệu)
+      basePrice = randomInt(810, 995);
+      year = randomInt(2020, 2023);
+      const tier8Options = [
+        { b: 'Hyundai', m: 'Santa Fe', s: 7, bs: 'SUV phổ thông cỡ lớn' },
+        { b: 'Ford', m: 'Everest', s: 7, bs: 'SUV phổ thông cỡ lớn' },
+        { b: 'Toyota', m: 'Camry', s: 5, bs: 'Xe cỡ trung hạng D' },
+        { b: 'Kia', m: 'Carnival', s: 7, bs: 'MPV cỡ lớn' },
+        { b: 'Honda', m: 'CR-V', s: 7, bs: 'Xe cỡ vừa hạng C' }
+      ];
+      const opt = randomElement(tier8Options);
+      brand = opt.b;
+      model = opt.m;
+      seatCount = opt.s;
+      bodyStyle = opt.bs;
+    } else {
+      // Trên 1 tỷ (1.050 - 4.500 triệu)
+      basePrice = randomInt(1050, 4500);
+      if (['Mercedes', 'BMW', 'Audi', 'Porsche', 'Lexus', 'Land Rover'].includes(brand)) {
+        basePrice = randomInt(1500, 5500);
+      }
     }
     
     if (i === 402) {
@@ -219,13 +365,12 @@ function generateMockCars(count: number): Car[] {
       year = 2026;
       condition = 'Mới';
       basePrice = 1245;
+      bodyStyle = 'SUV';
+      seatCount = 7;
     }
 
     const isElectric = brand === 'VinFast' && model.startsWith('VF');
     const engine = (i === 402) ? 'Dầu' : (isElectric ? 'Điện' : randomElement(ENGINES.filter(e => e !== 'Điện')));
-    
-    const bodyStyle = (i === 402) ? 'SUV' : randomElement(BODY_STYLES);
-    const seatCount = (i === 402) ? 7 : randomElement(SEATS);
     
     const car: Car = {
       id: `car-${i}`,

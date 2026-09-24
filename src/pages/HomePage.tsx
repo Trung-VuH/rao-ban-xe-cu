@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import SearchFilter from '../components/SearchFilter';
 import CarCard from '../components/CarCard';
 import { mockCars, getBrands, getBodyStyles, getLocations, BRAND_IMAGES, BODY_STYLE_IMAGES, MODEL_IMAGES } from '../data/mockData';
+import PriceRangeSection from '../components/PriceRangeSection';
 
 export default function HomePage() {
   const allBrands = getBrands();
@@ -55,6 +56,9 @@ export default function HomePage() {
           {recentCars.map(car => <CarCard key={car.id} car={car} />)}
         </div>
       </section>
+
+      {/* Các tin rao theo khoảng giá (Dựa trên Volume Search 24 tháng gần nhất) */}
+      <PriceRangeSection />
 
       <section className="mb-8">
         <h2 className="text-lg font-bold mb-4 uppercase tracking-wide text-gray-500 border-b border-gray-200 pb-2">Tìm theo Hãng xe</h2>
