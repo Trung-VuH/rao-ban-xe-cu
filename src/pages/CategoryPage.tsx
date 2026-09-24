@@ -96,14 +96,6 @@ export default function CategoryPage({ type }: { type: 'brand' | 'bodyStyle' | '
             <span className="text-sm text-gray-500">{filteredCars.length} kết quả phù hợp</span>
           </div>
 
-          {activeBrand && activeModel && (
-            <PriceHistoryChart 
-              brand={activeBrand} 
-              model={activeModel} 
-              title={`Biểu đồ giá rao bán các mẫu xe ${activeBrand} ${activeModel}`}
-            />
-          )}
-
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {currentCars.map(car => <CarCard key={car.id} car={car} />)}
           </div>
@@ -133,6 +125,16 @@ export default function CategoryPage({ type }: { type: 'brand' | 'bodyStyle' | '
               >
                 <ChevronRight size={16} />
               </button>
+            </div>
+          )}
+
+          {activeBrand && activeModel && (
+            <div className="mt-4">
+              <PriceHistoryChart 
+                brand={activeBrand} 
+                model={activeModel} 
+                title={`Biểu đồ giá rao bán các mẫu xe ${activeBrand} ${activeModel}`}
+              />
             </div>
           )}
         </div>

@@ -318,27 +318,54 @@ export function getCarSpecs(car: Car): CarDetailedSpecs {
   };
 }
 
-export function calculateOnRoadPrice(listedPriceInMillions: number, location: 'HN' | 'HCM' | 'PROVINCE', seats: number, isElectric: boolean = false) {
+export function calculateOnRoadPrice(
+  listedPriceInMillions: number, 
+  location: 'HN' | 'HCM' | 'PROVINCE', 
+  seats: number, 
+  isElectric: boolean = false,
+  isUsed: boolean = true,
+  usedCarTransferType: 'same_province' | 'diff_province' = 'same_province'
+) {
   const basePriceVND = listedPriceInMillions * 1000000;
   
-  // Registration tax: 12% in Hanoi, 10% in HCM & provinces; 0% for pure EV in Vietnam
-  const taxRate = isElectric ? 0 : (location === 'HN' ? 0.12 : 0.10);
+  // Registration tax:
+  // - Xe cũ: Thống nhất 2% giá trị hiện tại của xe trên toàn quốc theo quy định nhà nước (Nghị định 10/2022/NĐ-CP & Thông tư 13/2022/TT-BTC)
+  // - Xe mới: 12% tại Hà Nội, 10% tại TP.HCM & các tỉnh; 0% cho xe thuần điện
+  let taxRate = 0.02;
+  if (!isUsed) {
+    taxRate = isElectric ? 0 : (location === 'HN' ? 0.12 : 0.10);
+  } else {
+    taxRate = 0.02; // 2% giá trị hiện tại của xe cũ
+  }
   const registrationTax = Math.round(basePriceVND * taxRate);
 
-  // License plate fee: 20M in HN & HCM, 1M in provinces
-  const licensePlateFee = (location === 'HN' || location === 'HCM') ? 20000000 : 1000000;
+  // License plate / title transfer fee:
+  // - Xe cũ:
+  //   + Cùng tỉnh/thành: 150.000 VNĐ (cấp đổi chứng nhận đăng ký kèm biển số)
+  //   + Chuyển vùng khác tỉnh về HN/HCM: 14.000.000 VNĐ; chuyển về các tỉnh khác: 140.000 VNĐ
+  // - Xe mới: 14.000.000 VNĐ tại HN & TP.HCM, 140.000 VNĐ tại các tỉnh khác
+  let licensePlateFee = 150000;
+  if (isUsed) {
+    if (usedCarTransferType === 'diff_province') {
+      licensePlateFee = (location === 'HN' || location === 'HCM') ? 14000000 : 140000;
+    } else {
+      licensePlateFee = 150000;
+    }
+  } else {
+    licensePlateFee = (location === 'HN' || location === 'HCM') ? 14000000 : 140000;
+  }
 
-  // Inspection fee: 90,000 VND
-  const inspectionFee = 90000;
+  // Phí kiểm định xe cơ giới (đăng kiểm): 340.000 VNĐ (250.000 phí kiểm định + 90.000 lệ phí cấp giấy chứng nhận)
+  const inspectionFee = isUsed ? 340000 : 90000;
 
-  // Road maintenance fee (1 year for private car under 10 seats): 1,560,000 VND
+  // Phí bảo trì đường bộ (1 năm cho xe con dưới 10 chỗ): 1.560.000 VNĐ
   const roadMaintenanceFee = 1560000;
 
-  // Mandatory civil liability insurance:
-  // Under 6 seats: 480,700 VND; 6-11 seats: 873,400 VND
+  // Bảo hiểm trách nhiệm dân sự bắt buộc (1 năm):
+  // Dưới 6 chỗ: 480.700 VNĐ; từ 6-11 chỗ: 873.400 VNĐ
   const insuranceMandatory = seats >= 6 ? 873400 : 480700;
 
-  // Optional physical damage insurance (~1.4%):
+  // Bảo hiểm vật chất xe 1 năm (tự nguyện, ~1.4% giá trị xe):
   const physicalInsurance = Math.round(basePriceVND * 0.014);
 
   const totalWithoutPhysical = basePriceVND + registrationTax + licensePlateFee + inspectionFee + roadMaintenanceFee + insuranceMandatory;
@@ -347,7 +374,9 @@ export function calculateOnRoadPrice(listedPriceInMillions: number, location: 'H
   return {
     basePriceVND,
     registrationTax,
-    taxRate: Math.round(taxRate * 100),
+    taxRate: isUsed ? 2 : Math.round(taxRate * 100),
+    isUsed,
+    usedCarTransferType,
     licensePlateFee,
     inspectionFee,
     roadMaintenanceFee,

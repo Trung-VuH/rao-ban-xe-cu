@@ -17,7 +17,7 @@ export default function PriceRangeSection() {
   }, []);
 
   return (
-    <section className="bg-gradient-to-b from-gray-50 to-white rounded-2xl border border-gray-200/90 p-6 shadow-sm">
+    <section id="tin-rao-theo-khoang-gia" className="bg-gradient-to-b from-gray-50 to-white rounded-2xl border border-gray-200/90 p-6 shadow-sm scroll-mt-20">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-6 pb-4 border-b border-gray-200">
         <div>

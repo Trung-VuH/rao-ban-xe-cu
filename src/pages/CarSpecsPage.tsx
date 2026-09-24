@@ -33,7 +33,9 @@ export default function CarSpecsPage() {
   // Collapse state for each spec group
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
-  // On-road price calculator state
+  // On-road price calculator state: automatically determined by vehicle condition
+  const isUsedVehicle = car?.condition !== 'Mới';
+  const [usedCarTransferType, setUsedCarTransferType] = useState<'same_province' | 'diff_province'>('same_province');
   const [locationTab, setLocationTab] = useState<'HN' | 'HCM' | 'PROVINCE'>('HN');
   const [includePhysicalInsurance, setIncludePhysicalInsurance] = useState(true);
 
@@ -111,7 +113,14 @@ export default function CarSpecsPage() {
   // On-road calculation
   const currentVersionPrice = specs.versions[selectedVersionIndex]?.price || specs.listedPrice;
   const isElectric = car.engine === 'Điện';
-  const onRoad = calculateOnRoadPrice(currentVersionPrice, locationTab, specs.seats, isElectric);
+  const onRoad = calculateOnRoadPrice(
+    currentVersionPrice, 
+    locationTab, 
+    specs.seats, 
+    isElectric, 
+    isUsedVehicle, 
+    usedCarTransferType
+  );
   const totalOnRoadPrice = includePhysicalInsurance ? onRoad.totalWithPhysical : onRoad.totalWithoutPhysical;
 
   // Loan calculation
@@ -242,16 +251,26 @@ export default function CarSpecsPage() {
               {/* Price Block */}
               <div className="bg-[#9F224E]/5 border border-[#9F224E]/20 rounded-lg p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="text-xs uppercase font-bold text-gray-500 mb-0.5">Giá niêm yết chính hãng</div>
+                  <div className="text-xs uppercase font-bold text-gray-500 mb-0.5">
+                    {isUsedVehicle ? 'Giá xe đang rao bán' : 'Giá niêm yết chính hãng'}
+                  </div>
                   <div className="text-2xl sm:text-3xl font-black text-[#9F224E]">
                     {formatPriceMillion(currentVersionPrice)} <span className="text-sm font-semibold text-gray-600">VNĐ</span>
                   </div>
+                  {isUsedVehicle && (
+                    <div className="text-[11px] text-emerald-700 font-semibold mt-1 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <span>Xe cũ: Trước bạ chỉ 2% giá trị hiện tại</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="sm:text-right border-t sm:border-t-0 sm:border-l border-gray-200 pt-2 sm:pt-0 sm:pl-4">
-                  <div className="text-xs uppercase font-bold text-gray-500 mb-0.5">Giá lăn bánh tạm tính (Hà Nội)</div>
+                  <div className="text-xs uppercase font-bold text-gray-500 mb-0.5">
+                    {isUsedVehicle ? 'Tổng chi phí lăn bánh dự tính (Trước bạ 2%)' : 'Giá lăn bánh tạm tính (Hà Nội)'}
+                  </div>
                   <div className="text-lg font-bold text-gray-900">
-                    ~{(onRoad.totalWithPhysical / 1000000000).toFixed(3)} Tỷ
+                    {formatPriceVND(totalOnRoadPrice)}
                   </div>
                   <a href="#du-tinh-lan-banh" className="text-xs font-bold text-[#9F224E] hover:underline flex items-center sm:justify-end gap-1 mt-0.5">
                     <Calculator size={12} /> Bảng tính chi tiết
@@ -480,48 +499,102 @@ export default function CarSpecsPage() {
 
           {/* On-Road Price Calculator (Dự tính lăn bánh) */}
           <div id="du-tinh-lan-banh" className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm scroll-mt-20">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-200 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-200 mb-4">
               <div className="flex items-center gap-2">
                 <Calculator size={20} className="text-[#9F224E]" />
                 <h3 className="font-extrabold text-lg text-gray-800">
                   Dự tính chi phí lăn bánh: {specs.fullName}
                 </h3>
               </div>
-              <span className="text-xs text-gray-400">Đơn vị: VNĐ</span>
+              <div className="flex items-center gap-2">
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                  isUsedVehicle
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : 'bg-blue-50 text-blue-800 border-blue-200'
+                }`}>
+                  {isUsedVehicle ? 'Xe cũ (Trước bạ 2%)' : 'Xe mới 100%'}
+                </span>
+                <span className="text-xs text-gray-400">Đơn vị: VNĐ</span>
+              </div>
             </div>
 
-            {/* Region Tabs */}
-            <div className="flex gap-2 mb-5">
-              <button
-                onClick={() => setLocationTab('HN')}
-                className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold uppercase transition-all ${
-                  locationTab === 'HN'
-                    ? 'bg-[#9F224E] text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                Hà Nội (Trước bạ 12%)
-              </button>
-              <button
-                onClick={() => setLocationTab('HCM')}
-                className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold uppercase transition-all ${
-                  locationTab === 'HCM'
-                    ? 'bg-[#9F224E] text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                TP. Hồ Chí Minh (Trước bạ 10%)
-              </button>
-              <button
-                onClick={() => setLocationTab('PROVINCE')}
-                className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold uppercase transition-all ${
-                  locationTab === 'PROVINCE'
-                    ? 'bg-[#9F224E] text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                Tỉnh / Thành khác
-              </button>
+            {/* Region Tabs & Transfer Options */}
+            <div className="space-y-3 mb-5">
+              <div>
+                <div className="text-xs font-bold text-gray-700 mb-1.5">
+                  Khu vực đăng ký lăn bánh:
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setLocationTab('HN')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                      locationTab === 'HN'
+                        ? 'bg-[#9F224E] text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Hà Nội {isUsedVehicle ? '(Trước bạ 2%)' : '(Trước bạ 12%)'}
+                  </button>
+                  <button
+                    onClick={() => setLocationTab('HCM')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                      locationTab === 'HCM'
+                        ? 'bg-[#9F224E] text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    TP. Hồ Chí Minh {isUsedVehicle ? '(Trước bạ 2%)' : '(Trước bạ 10%)'}
+                  </button>
+                  <button
+                    onClick={() => setLocationTab('PROVINCE')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                      locationTab === 'PROVINCE'
+                        ? 'bg-[#9F224E] text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Tỉnh / Thành khác {isUsedVehicle ? '(Trước bạ 2%)' : '(Trước bạ 10%)'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Sang tên xe cũ options */}
+              {isUsedVehicle && (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div className="text-xs font-bold text-gray-700 mb-2">
+                    Hình thức sang tên & cấp đổi biển số xe cũ:
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <label className={`flex items-start gap-2 p-2 rounded border cursor-pointer transition-all ${usedCarTransferType === 'same_province' ? 'bg-white border-[#9F224E] shadow-2xs' : 'border-gray-200 hover:bg-white'}`}>
+                      <input
+                        type="radio"
+                        name="transferType"
+                        checked={usedCarTransferType === 'same_province'}
+                        onChange={() => setUsedCarTransferType('same_province')}
+                        className="mt-0.5 accent-[#9F224E]"
+                      />
+                      <div>
+                        <div className="font-bold text-gray-900">Sang tên cùng tỉnh/thành hoặc đã có biển định danh</div>
+                        <div className="text-[11px] text-gray-500 mt-0.5">Lệ phí cấp đổi chứng nhận đăng ký kèm biển: <strong>150.000 đ</strong></div>
+                      </div>
+                    </label>
+
+                    <label className={`flex items-start gap-2 p-2 rounded border cursor-pointer transition-all ${usedCarTransferType === 'diff_province' ? 'bg-white border-[#9F224E] shadow-2xs' : 'border-gray-200 hover:bg-white'}`}>
+                      <input
+                        type="radio"
+                        name="transferType"
+                        checked={usedCarTransferType === 'diff_province'}
+                        onChange={() => setUsedCarTransferType('diff_province')}
+                        className="mt-0.5 accent-[#9F224E]"
+                      />
+                      <div>
+                        <div className="font-bold text-gray-900">Chuyển vùng xe từ tỉnh về Hà Nội / TP.HCM</div>
+                        <div className="text-[11px] text-gray-500 mt-0.5">Phí cấp biển số mới lần đầu tại HN/HCM: <strong>{(locationTab === 'HN' || locationTab === 'HCM') ? '14.000.000 đ' : '140.000 đ'}</strong></div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* On-Road Breakdown Table */}
@@ -531,22 +604,34 @@ export default function CarSpecsPage() {
                 <span>Số tiền tạm tính</span>
               </div>
               <div className="flex justify-between p-3">
-                <span className="text-gray-700">1. Giá niêm yết xe</span>
+                <span className="text-gray-700">
+                  {isUsedVehicle ? '1. Giá trị hiện tại của xe (thương lượng)' : '1. Giá niêm yết xe'}
+                </span>
                 <span className="font-bold text-gray-900">{formatPriceVND(onRoad.basePriceVND)}</span>
               </div>
               <div className="flex justify-between p-3 bg-gray-50/50">
-                <span className="text-gray-700">
-                  2. Lệ phí trước bạ ({onRoad.taxRate}%)
-                  {isElectric && <span className="ml-1 text-[11px] text-emerald-600 font-semibold">(Xe điện ưu đãi 0%)</span>}
-                </span>
+                <div className="text-gray-700 flex flex-wrap items-center gap-1.5">
+                  <span>2. Lệ phí trước bạ ({onRoad.taxRate}%)</span>
+                  {isUsedVehicle ? (
+                    <span className="text-[11px] text-emerald-800 bg-emerald-100 border border-emerald-300 font-extrabold px-2 py-0.5 rounded">
+                      Xe cũ: 2% giá trị hiện tại (toàn quốc)
+                    </span>
+                  ) : isElectric ? (
+                    <span className="text-[11px] text-emerald-600 font-semibold">(Xe điện ưu đãi 0%)</span>
+                  ) : null}
+                </div>
                 <span className="font-bold text-gray-900">{formatPriceVND(onRoad.registrationTax)}</span>
               </div>
               <div className="flex justify-between p-3">
-                <span className="text-gray-700">3. Phí đăng ký biển số</span>
+                <span className="text-gray-700">
+                  {isUsedVehicle ? '3. Phí sang tên / cấp đổi biển số' : '3. Phí đăng ký biển số mới'}
+                </span>
                 <span className="font-bold text-gray-900">{formatPriceVND(onRoad.licensePlateFee)}</span>
               </div>
               <div className="flex justify-between p-3 bg-gray-50/50">
-                <span className="text-gray-700">4. Phí đăng kiểm</span>
+                <span className="text-gray-700">
+                  {isUsedVehicle ? '4. Phí đăng kiểm & chứng nhận ATKT xe' : '4. Phí đăng kiểm'}
+                </span>
                 <span className="font-bold text-gray-900">{formatPriceVND(onRoad.inspectionFee)}</span>
               </div>
               <div className="flex justify-between p-3">
@@ -565,7 +650,9 @@ export default function CarSpecsPage() {
                     onChange={e => setIncludePhysicalInsurance(e.target.checked)}
                     className="accent-[#9F224E] w-4 h-4 rounded"
                   />
-                  <span>7. Bảo hiểm vật chất xe 1 năm (~1.4% giá xe, tự nguyện)</span>
+                  <span>
+                    7. Bảo hiểm vật chất xe 1 năm (~1.4% giá trị hiện tại của xe, tự nguyện)
+                  </span>
                 </label>
                 <span className={`font-bold ${includePhysicalInsurance ? 'text-gray-900' : 'text-gray-400 line-through'}`}>
                   {formatPriceVND(onRoad.physicalInsurance)}

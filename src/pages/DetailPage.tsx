@@ -2,7 +2,8 @@ import { useParams, Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { mockCars } from '../data/mockData';
 import { getCarPrimaryPriceRange, getAllMatchingPriceRanges } from '../data/priceRangesData';
-import { ChevronRight, Calendar, Gauge, MapPin, Fuel, Users, Settings, Tag, Phone, Search, ExternalLink } from 'lucide-react';
+import { calculateOnRoadPrice } from '../data/carSpecsData';
+import { ChevronRight, Calendar, Gauge, MapPin, Fuel, Users, Settings, Tag, Phone, Search, ExternalLink, Calculator, CheckCircle2 } from 'lucide-react';
 import CarCard from '../components/CarCard';
 import PriceHistoryChart from '../components/PriceHistoryChart';
 
@@ -14,6 +15,13 @@ export default function DetailPage() {
 
   const primaryPriceRange = useMemo(() => car ? getCarPrimaryPriceRange(car) : null, [car]);
   const allMatchingRanges = useMemo(() => car ? getAllMatchingPriceRanges(car) : [], [car]);
+
+  const isUsedVehicle = car ? car.condition !== 'Mới' : true;
+  const onRoadEstimate = useMemo(() => {
+    if (!car) return null;
+    const isElectric = car.engine === 'Điện';
+    return calculateOnRoadPrice(car.price, 'HN', car.seats || 5, isElectric, isUsedVehicle, 'same_province');
+  }, [car, isUsedVehicle]);
 
   const relatedByModel = useMemo(() => 
     car ? mockCars.filter(c => c.brand === car.brand && c.model === car.model && c.id !== car.id).slice(0, 4) : [],
@@ -83,6 +91,23 @@ export default function DetailPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="text-3xl font-bold text-[#9F224E]">{formatPrice(car.price)}</div>
+
+            {/* Estimated Rolling Cost with 2% used car tax badge */}
+            {onRoadEstimate && (
+              <Link
+                to={`/xe/${car.id}/chi-tiet-tskt#du-tinh-lan-banh`}
+                className="inline-flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 text-xs font-semibold px-3 py-1.5 rounded-full transition-all group shadow-2xs"
+                title="Bấm để xem bảng dự tính chi phí lăn bánh chi tiết"
+              >
+                <Calculator size={13} className="text-emerald-700 shrink-0" />
+                <span>
+                  Lăn bánh dự tính: <strong>~{formatPrice(Math.round(onRoadEstimate.totalWithoutPhysical / 1000000))}</strong>
+                </span>
+                <span className="text-[10px] bg-emerald-200/70 text-emerald-900 px-1.5 py-0.5 rounded font-bold">
+                  {isUsedVehicle ? 'Trước bạ 2%' : 'Xe mới'}
+                </span>
+              </Link>
+            )}
 
             {primaryPriceRange && (
               <Link
@@ -240,6 +265,54 @@ export default function DetailPage() {
             </Link>
           </div>
         </div>
+
+        {/* Estimated Rolling Cost Card */}
+        {onRoadEstimate && (
+          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-gray-100">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-gray-800 uppercase tracking-wide">
+                <Calculator size={14} className="text-[#9F224E]" />
+                <span>Dự tính chi phí lăn bánh</span>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                {isUsedVehicle ? 'Trước bạ xe cũ 2%' : 'Xe mới 10% - 12%'}
+              </span>
+            </div>
+
+            <div className="space-y-2 text-xs text-gray-600 mb-3">
+              <div className="flex justify-between">
+                <span>Giá xe rao bán:</span>
+                <span className="font-semibold text-gray-800">{formatPrice(car.price)}</span>
+              </div>
+              <div className="flex justify-between items-center text-emerald-700 bg-emerald-50/70 p-2 rounded border border-emerald-100">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
+                  <span>Lệ phí trước bạ ({isUsedVehicle ? '2% xe cũ' : '12%'}):</span>
+                </span>
+                <span className="font-bold">{new Intl.NumberFormat('vi-VN').format(onRoadEstimate.registrationTax)} đ</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Phí biển số, đăng kiểm, đường bộ, TNDS:</span>
+                <span className="font-semibold text-gray-800">
+                  ~{new Intl.NumberFormat('vi-VN').format(onRoadEstimate.licensePlateFee + onRoadEstimate.inspectionFee + onRoadEstimate.roadMaintenanceFee + onRoadEstimate.insuranceMandatory)} đ
+                </span>
+              </div>
+              <div className="pt-2 border-t border-gray-100 flex justify-between items-baseline font-bold text-sm text-gray-900">
+                <span>Tổng chi phí dự tính:</span>
+                <span className="text-base text-[#9F224E] font-black">
+                  ~{new Intl.NumberFormat('vi-VN').format(onRoadEstimate.totalWithoutPhysical)} đ
+                </span>
+              </div>
+            </div>
+
+            <Link
+              to={`/xe/${car.id}/chi-tiet-tskt#du-tinh-lan-banh`}
+              className="w-full block text-center bg-gray-50 hover:bg-[#9F224E] hover:text-white text-gray-700 font-bold text-xs py-2 px-3 rounded-lg border border-gray-200 transition-colors"
+            >
+              Xem bảng tính chi tiết & tùy chỉnh &rarr;
+            </Link>
+          </div>
+        )}
 
         {/* Price Range Category Box */}
         {primaryPriceRange && (
