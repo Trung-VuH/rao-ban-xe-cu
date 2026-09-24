@@ -16,11 +16,62 @@ export default function SearchPage() {
     const initialState: FilterState = {};
     const params = Object.fromEntries(searchParams.entries());
     
-    if (params.location) initialState.location = params.location;
-    if (params.brand) initialState.brand = params.brand;
+    // Parse locations: supports both single and multiple values (?locations=Hà Nội,TP HCM or ?location=Hà Nội)
+    const rawLocations = searchParams.getAll('locations').concat(searchParams.getAll('location'));
+    const parsedLocations: string[] = [];
+    rawLocations.forEach(loc => {
+      loc.split(',').forEach(item => {
+        const trimmed = item.trim();
+        if (trimmed && !parsedLocations.includes(trimmed)) {
+          parsedLocations.push(trimmed);
+        }
+      });
+    });
+    if (parsedLocations.length > 0) {
+      initialState.locations = parsedLocations;
+      if (parsedLocations.length === 1) {
+        initialState.location = parsedLocations[0];
+      }
+    }
+
+    // Parse brands: supports both single and multiple values (?brands=Toyota,Hyundai or ?brand=Toyota)
+    const rawBrands = searchParams.getAll('brands').concat(searchParams.getAll('brand'));
+    const parsedBrands: string[] = [];
+    rawBrands.forEach(b => {
+      b.split(',').forEach(item => {
+        const trimmed = item.trim();
+        if (trimmed && !parsedBrands.includes(trimmed)) {
+          parsedBrands.push(trimmed);
+        }
+      });
+    });
+    if (parsedBrands.length > 0) {
+      initialState.brands = parsedBrands;
+      if (parsedBrands.length === 1) {
+        initialState.brand = parsedBrands[0];
+      }
+    }
+
+    // Parse bodyStyles (phân khúc): supports both single and multiple values (?bodyStyles=Sedan,SUV or ?bodyStyle=Sedan)
+    const rawBodyStyles = searchParams.getAll('bodyStyles').concat(searchParams.getAll('bodyStyle'));
+    const parsedBodyStyles: string[] = [];
+    rawBodyStyles.forEach(s => {
+      s.split(',').forEach(item => {
+        const trimmed = item.trim();
+        if (trimmed && !parsedBodyStyles.includes(trimmed)) {
+          parsedBodyStyles.push(trimmed);
+        }
+      });
+    });
+    if (parsedBodyStyles.length > 0) {
+      initialState.bodyStyles = parsedBodyStyles;
+      if (parsedBodyStyles.length === 1) {
+        initialState.bodyStyle = parsedBodyStyles[0];
+      }
+    }
+
     if (params.model) initialState.model = params.model;
     if (params.condition) initialState.condition = params.condition;
-    if (params.bodyStyle) initialState.bodyStyle = params.bodyStyle;
     if (params.engine) initialState.engine = params.engine;
     if (params.seats) initialState.seats = params.seats;
     if (params.yearFrom) initialState.yearFrom = parseInt(params.yearFrom);
@@ -35,11 +86,32 @@ export default function SearchPage() {
 
   const filteredCars = useMemo(() => {
     return mockCars.filter(car => {
-      if (filterState.location && car.location !== filterState.location) return false;
-      if (filterState.brand && car.brand !== filterState.brand) return false;
+      // Multiple/single locations filter
+      const activeLocations = filterState.locations && filterState.locations.length > 0
+        ? filterState.locations
+        : (filterState.location ? [filterState.location] : []);
+      if (activeLocations.length > 0 && !activeLocations.includes(car.location)) {
+        return false;
+      }
+
+      // Multiple/single brands filter
+      const activeBrands = filterState.brands && filterState.brands.length > 0
+        ? filterState.brands
+        : (filterState.brand ? [filterState.brand] : []);
+      if (activeBrands.length > 0 && !activeBrands.includes(car.brand)) {
+        return false;
+      }
+
+      // Multiple/single body styles (phân khúc) filter
+      const activeBodyStyles = filterState.bodyStyles && filterState.bodyStyles.length > 0
+        ? filterState.bodyStyles
+        : (filterState.bodyStyle ? [filterState.bodyStyle] : []);
+      if (activeBodyStyles.length > 0 && !activeBodyStyles.includes(car.bodyStyle)) {
+        return false;
+      }
+
       if (filterState.model && car.model !== filterState.model) return false;
       if (filterState.condition && car.condition !== filterState.condition) return false;
-      if (filterState.bodyStyle && car.bodyStyle !== filterState.bodyStyle) return false;
       if (filterState.engine && car.engine !== filterState.engine) return false;
       
       if (filterState.yearFrom && car.year < filterState.yearFrom) return false;
@@ -66,9 +138,35 @@ export default function SearchPage() {
   const getPageTitle = () => {
     const parts = [];
     if (filterState.keyword) parts.push(`"${filterState.keyword}"`);
-    if (filterState.brand) parts.push(filterState.brand);
+
+    const activeBrands = filterState.brands && filterState.brands.length > 0
+      ? filterState.brands
+      : (filterState.brand ? [filterState.brand] : []);
+    if (activeBrands.length === 1) {
+      parts.push(activeBrands[0]);
+    } else if (activeBrands.length > 1) {
+      parts.push(activeBrands.join(', '));
+    }
+
     if (filterState.model) parts.push(filterState.model);
-    if (filterState.location) parts.push(`tại ${filterState.location}`);
+
+    const activeBodyStyles = filterState.bodyStyles && filterState.bodyStyles.length > 0
+      ? filterState.bodyStyles
+      : (filterState.bodyStyle ? [filterState.bodyStyle] : []);
+    if (activeBodyStyles.length === 1) {
+      parts.push(`Phân khúc ${activeBodyStyles[0]}`);
+    } else if (activeBodyStyles.length > 1) {
+      parts.push(`Phân khúc (${activeBodyStyles.join(', ')})`);
+    }
+
+    const activeLocations = filterState.locations && filterState.locations.length > 0
+      ? filterState.locations
+      : (filterState.location ? [filterState.location] : []);
+    if (activeLocations.length === 1) {
+      parts.push(`tại ${activeLocations[0]}`);
+    } else if (activeLocations.length > 1) {
+      parts.push(`tại ${activeLocations.join(', ')}`);
+    }
     
     if (parts.length > 0) return `Kết quả tìm kiếm: ${parts.join(' ')}`;
     return 'Tất cả tin đăng';

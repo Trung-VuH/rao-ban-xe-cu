@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Car, Layers, MapPin } from 'lucide-react';
 import { getBrands, getModelsByBrand, getLocations, getBodyStyles } from '../data/mockData';
 import { FilterState } from '../types';
+import MultiSelectDropdown from './MultiSelectDropdown';
 
 interface SearchFilterProps {
   initialState?: FilterState;
@@ -19,12 +21,74 @@ export default function SearchFilter({ initialState, variant = 'horizontal', onC
     }
   }, [initialState]);
 
+  // Selected arrays with fallback to singular values
+  const selectedLocations: string[] = state.locations && state.locations.length > 0
+    ? state.locations
+    : (state.location ? [state.location] : []);
+
+  const selectedBrands: string[] = state.brands && state.brands.length > 0
+    ? state.brands
+    : (state.brand ? [state.brand] : []);
+
+  const selectedBodyStyles: string[] = state.bodyStyles && state.bodyStyles.length > 0
+    ? state.bodyStyles
+    : (state.bodyStyle ? [state.bodyStyle] : []);
+
+  const handleLocationsChange = (newLocations: string[]) => {
+    const newState: FilterState = { ...state };
+    if (newLocations.length === 0) {
+      delete newState.locations;
+      delete newState.location;
+    } else {
+      newState.locations = newLocations;
+      newState.location = newLocations.length === 1 ? newLocations[0] : undefined;
+    }
+    setState(newState);
+    if (onChange && variant === 'vertical') {
+      onChange(newState);
+    }
+  };
+
+  const handleBrandsChange = (newBrands: string[]) => {
+    const newState: FilterState = { ...state };
+    if (newBrands.length === 0) {
+      delete newState.brands;
+      delete newState.brand;
+      delete newState.model;
+    } else {
+      newState.brands = newBrands;
+      newState.brand = newBrands.length === 1 ? newBrands[0] : undefined;
+      // Reset model if it does not belong to selected brands
+      if (newState.model) {
+        const allowedModels = newBrands.flatMap(b => getModelsByBrand(b));
+        if (!allowedModels.includes(newState.model)) {
+          delete newState.model;
+        }
+      }
+    }
+    setState(newState);
+    if (onChange && variant === 'vertical') {
+      onChange(newState);
+    }
+  };
+
+  const handleBodyStylesChange = (newStyles: string[]) => {
+    const newState: FilterState = { ...state };
+    if (newStyles.length === 0) {
+      delete newState.bodyStyles;
+      delete newState.bodyStyle;
+    } else {
+      newState.bodyStyles = newStyles;
+      newState.bodyStyle = newStyles.length === 1 ? newStyles[0] : undefined;
+    }
+    setState(newState);
+    if (onChange && variant === 'vertical') {
+      onChange(newState);
+    }
+  };
+
   const handleChange = (key: keyof FilterState, value: any) => {
     const newState = { ...state, [key]: value };
-    // Reset model if brand changes
-    if (key === 'brand') {
-      delete newState.model;
-    }
     // Remove year range if condition is new
     if (key === 'condition' && value === 'Mới') {
       delete newState.yearFrom;
@@ -41,7 +105,15 @@ export default function SearchFilter({ initialState, variant = 'horizontal', onC
     if (variant === 'horizontal') {
       const params = new URLSearchParams();
       Object.entries(state).forEach(([key, value]) => {
-        if (value) params.append(key, String(value));
+        if (key === 'locations' && Array.isArray(value) && value.length > 0) {
+          params.append('locations', value.join(','));
+        } else if (key === 'brands' && Array.isArray(value) && value.length > 0) {
+          params.append('brands', value.join(','));
+        } else if (key === 'bodyStyles' && Array.isArray(value) && value.length > 0) {
+          params.append('bodyStyles', value.join(','));
+        } else if (!['locations', 'brands', 'bodyStyles'].includes(key) && value) {
+          params.append(key, String(value));
+        }
       });
       navigate(`/tim-kiem?${params.toString()}`);
     }
@@ -53,6 +125,11 @@ export default function SearchFilter({ initialState, variant = 'horizontal', onC
   const labelClass = "block text-xs font-bold uppercase text-gray-500 mb-1.5";
   const selectClass = "w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#9F224E]";
   const inputClass = "w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#9F224E]";
+
+  // Models available based on selected brands
+  const availableModels = selectedBrands.length === 1
+    ? getModelsByBrand(selectedBrands[0])
+    : (selectedBrands.length > 1 ? selectedBrands.flatMap(b => getModelsByBrand(b)) : []);
 
   return (
     <form onSubmit={handleSearch} className={isVertical ? "" : "bg-white p-6 rounded-lg shadow-sm border border-gray-200"}>
@@ -71,32 +148,64 @@ export default function SearchFilter({ initialState, variant = 'horizontal', onC
           </div>
         )}
         
-        <div>
-          <label className={labelClass}>Tỉnh/thành</label>
-          <select className={selectClass} value={state.location || ''} onChange={e => handleChange('location', e.target.value)}>
-            <option value="">Tất cả</option>
-            {getLocations().map(loc => <option key={loc} value={loc}>{loc}</option>)}
-          </select>
-        </div>
+        {/* Tỉnh/thành Multi-select */}
+        <MultiSelectDropdown
+          label="Tỉnh/thành"
+          options={getLocations()}
+          selectedValues={selectedLocations}
+          onChange={handleLocationsChange}
+          placeholder="Tất cả tỉnh thành"
+          icon={<MapPin size={15} />}
+          isVertical={isVertical}
+          showChips={isVertical}
+        />
 
-        <div>
-          <label className={labelClass}>Hãng xe</label>
-          <select className={selectClass} value={state.brand || ''} onChange={e => handleChange('brand', e.target.value)}>
-            <option value="">Tất cả</option>
-            {getBrands().map(brand => <option key={brand} value={brand}>{brand}</option>)}
-          </select>
-        </div>
+        {/* Hãng xe Multi-select with Search */}
+        <MultiSelectDropdown
+          label="Hãng xe"
+          options={getBrands()}
+          selectedValues={selectedBrands}
+          onChange={handleBrandsChange}
+          placeholder="Tất cả hãng xe"
+          icon={<Car size={15} />}
+          enableSearch={true}
+          searchPlaceholder="Tìm hãng xe..."
+          isVertical={isVertical}
+          showChips={isVertical}
+        />
 
-        {state.brand && (
+        {/* Dòng xe: available when at least 1 brand selected */}
+        {selectedBrands.length > 0 && availableModels.length > 0 && (
           <div>
             <label className={labelClass}>Dòng xe</label>
-            <select className={selectClass} value={state.model || ''} onChange={e => handleChange('model', e.target.value)}>
+            <select
+              className={selectClass}
+              value={state.model || ''}
+              onChange={e => handleChange('model', e.target.value)}
+            >
               <option value="">Tất cả</option>
-              {getModelsByBrand(state.brand).map(model => <option key={model} value={model}>{model}</option>)}
+              {selectedBrands.length === 1 ? (
+                availableModels.map(model => (
+                  <option key={model} value={model}>{model}</option>
+                ))
+              ) : (
+                selectedBrands.map(b => {
+                  const models = getModelsByBrand(b);
+                  if (models.length === 0) return null;
+                  return (
+                    <optgroup key={b} label={b}>
+                      {models.map(m => (
+                        <option key={`${b}-${m}`} value={m}>{m} ({b})</option>
+                      ))}
+                    </optgroup>
+                  );
+                })
+              )}
             </select>
           </div>
         )}
 
+        {/* Tình trạng */}
         <div>
           <label className={labelClass}>Tình trạng</label>
           <div className="flex gap-2">
@@ -106,6 +215,7 @@ export default function SearchFilter({ initialState, variant = 'horizontal', onC
           </div>
         </div>
 
+        {/* Năm sản xuất (cho xe cũ) */}
         {state.condition === 'Cũ' && (
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -119,14 +229,19 @@ export default function SearchFilter({ initialState, variant = 'horizontal', onC
           </div>
         )}
 
-        <div>
-          <label className={labelClass}>Kiểu dáng</label>
-          <select className={selectClass} value={state.bodyStyle || ''} onChange={e => handleChange('bodyStyle', e.target.value)}>
-            <option value="">Tất cả</option>
-            {getBodyStyles().map(style => <option key={style} value={style}>{style}</option>)}
-          </select>
-        </div>
+        {/* Phân Khúc Multi-select */}
+        <MultiSelectDropdown
+          label="Phân Khúc"
+          options={getBodyStyles()}
+          selectedValues={selectedBodyStyles}
+          onChange={handleBodyStylesChange}
+          placeholder="Tất cả phân khúc"
+          icon={<Layers size={15} />}
+          isVertical={isVertical}
+          showChips={isVertical}
+        />
 
+        {/* Động cơ */}
         <div>
           <label className={labelClass}>Động cơ</label>
           <select className={selectClass} value={state.engine || ''} onChange={e => handleChange('engine', e.target.value)}>
@@ -138,6 +253,7 @@ export default function SearchFilter({ initialState, variant = 'horizontal', onC
           </select>
         </div>
 
+        {/* Số chỗ */}
         <div>
           <label className={labelClass}>Số chỗ</label>
           <select className={selectClass} value={state.seats || ''} onChange={e => handleChange('seats', e.target.value)}>
@@ -148,6 +264,7 @@ export default function SearchFilter({ initialState, variant = 'horizontal', onC
           </select>
         </div>
 
+        {/* Khoảng giá */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={labelClass}>Giá từ (Triệu)</label>

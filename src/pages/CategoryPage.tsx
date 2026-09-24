@@ -17,15 +17,26 @@ export default function CategoryPage({ type }: { type: 'brand' | 'bodyStyle' | '
   // Initialize filter state based on route params
   useEffect(() => {
     const initialState: FilterState = {};
-    if (type === 'brand' && brand) initialState.brand = brand;
-    if (type === 'bodyStyle' && bodyStyle) initialState.bodyStyle = bodyStyle;
-    if (type === 'location' && location) initialState.location = location;
+    if (type === 'brand' && brand) {
+      initialState.brand = brand;
+      initialState.brands = [brand];
+    }
+    if (type === 'bodyStyle' && bodyStyle) {
+      initialState.bodyStyle = bodyStyle;
+      initialState.bodyStyles = [bodyStyle];
+    }
+    if (type === 'location' && location) {
+      initialState.location = location;
+      initialState.locations = [location];
+    }
     if (type === 'model' && brand && model) {
       initialState.brand = brand;
+      initialState.brands = [brand];
       initialState.model = model;
     }
     if (type === 'year' && brand && model && year) {
       initialState.brand = brand;
+      initialState.brands = [brand];
       initialState.model = model;
       initialState.year = parseInt(year);
     }
@@ -37,11 +48,32 @@ export default function CategoryPage({ type }: { type: 'brand' | 'bodyStyle' | '
 
   const filteredCars = useMemo(() => {
     return mockCars.filter(car => {
-      if (filterState.location && car.location !== filterState.location) return false;
-      if (filterState.brand && car.brand !== filterState.brand) return false;
+      // Multiple/single locations filter
+      const activeLocations = filterState.locations && filterState.locations.length > 0
+        ? filterState.locations
+        : (filterState.location ? [filterState.location] : []);
+      if (activeLocations.length > 0 && !activeLocations.includes(car.location)) {
+        return false;
+      }
+
+      // Multiple/single brands filter
+      const activeBrands = filterState.brands && filterState.brands.length > 0
+        ? filterState.brands
+        : (filterState.brand ? [filterState.brand] : []);
+      if (activeBrands.length > 0 && !activeBrands.includes(car.brand)) {
+        return false;
+      }
+
+      // Multiple/single body styles (phân khúc) filter
+      const activeBodyStyles = filterState.bodyStyles && filterState.bodyStyles.length > 0
+        ? filterState.bodyStyles
+        : (filterState.bodyStyle ? [filterState.bodyStyle] : []);
+      if (activeBodyStyles.length > 0 && !activeBodyStyles.includes(car.bodyStyle)) {
+        return false;
+      }
+
       if (filterState.model && car.model !== filterState.model) return false;
       if (filterState.condition && car.condition !== filterState.condition) return false;
-      if (filterState.bodyStyle && car.bodyStyle !== filterState.bodyStyle) return false;
       if (filterState.engine && car.engine !== filterState.engine) return false;
       
       if (filterState.yearFrom && car.year < filterState.yearFrom) return false;

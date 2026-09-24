@@ -27,15 +27,18 @@ export interface Car {
 export interface FilterState {
   keyword?: string;
   brand?: string;
+  brands?: string[];
   model?: string;
   condition?: string;
   yearFrom?: number;
   yearTo?: number;
   year?: number;
   bodyStyle?: string;
+  bodyStyles?: string[];
   engine?: string;
   priceFrom?: number;
   priceTo?: number;
   seats?: string; // "2", "3-5", "7-9"
   location?: string;
+  locations?: string[];
 }
